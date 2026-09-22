@@ -20,6 +20,7 @@ export function scoreSeat(
     (sum, slot) => sum + (slot.player?.rating ?? 0),
     0,
   );
+
   const budgetBonus = remainingBudget * BUDGET_POINTS_PER_EURO;
 
   return {

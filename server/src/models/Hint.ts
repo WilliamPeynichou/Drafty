@@ -47,4 +47,5 @@ Hint.init(
 );
 
 Player.hasMany(Hint, { foreignKey: 'playerId', as: 'hints', onDelete: 'CASCADE' });
+
 Hint.belongsTo(Player, { foreignKey: 'playerId', as: 'player' });

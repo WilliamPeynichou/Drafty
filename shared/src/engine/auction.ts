@@ -41,7 +41,9 @@ export function canAcquirePosition(
   rules: SportRules,
 ): boolean {
   const limit = rules.positionLimits[position];
+
   if (limit === undefined) return true;
+
   return countAtPosition(roster, position) < limit;
 }
 
@@ -58,12 +60,15 @@ export function checkBid(params: {
   const { auction, seat, amount, budget, roster, position, rules } = params;
 
   if (auction.turn !== seat) return { ok: false, reason: 'not_your_turn' };
+
   if (!canAcquirePosition(roster, position, rules)) {
     return { ok: false, reason: 'position_limit_reached' };
   }
+
   if (!Number.isInteger(amount) || amount < minimumAcceptableBid(auction)) {
     return { ok: false, reason: 'below_minimum' };
   }
+
   if (amount > budget) return { ok: false, reason: 'not_enough_budget' };
 
   return { ok: true };
@@ -82,7 +87,9 @@ export function canStillBid(params: {
   rules: SportRules;
 }): boolean {
   const { auction, budget, roster, position, rules } = params;
+
   if (!canAcquirePosition(roster, position, rules)) return false;
+
   return budget >= minimumAcceptableBid(auction);
 }
 
@@ -119,6 +126,7 @@ export function resolveOnPass(auction: AuctionState): AuctionOutcome {
   if (auction.highBidder === null) {
     return { winner: null, pricePaid: 0 };
   }
+
   return { winner: auction.highBidder, pricePaid: auction.currentBid };
 }
 
@@ -131,6 +139,7 @@ export function startAuction(params: {
   turnDurationMs: number;
 }): AuctionState {
   const { lotId, round, opener, now, turnDurationMs } = params;
+
   return {
     lotId,
     round,
@@ -145,5 +154,6 @@ export function startAuction(params: {
 /** Le siège qui ouvre le tour demandé, l'ouverture alternant à chaque tour. */
 export function openerForRound(firstOpener: SeatId, round: number): SeatId {
   const shift = (round - 1) % 2;
+
   return shift === 0 ? firstOpener : otherSeat(firstOpener);
 }

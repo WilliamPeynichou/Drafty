@@ -21,6 +21,7 @@ catalogRouter.get('/stats', async (_req, res) => {
       'SELECT sport, tier, COUNT(*) AS total FROM players WHERE active = true GROUP BY sport, tier ORDER BY sport, tier',
       { type: QueryTypes.SELECT },
     );
+
     res.json({ stats: rows });
   } catch {
     res.status(503).json({ error: 'database_unavailable' });

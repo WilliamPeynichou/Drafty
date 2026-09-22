@@ -171,5 +171,6 @@ export const BASKETBALL_PLAYERS: CatalogueEntry[] = NBA_ROWS.map(([name, positio
   tier,
   hints: [hint],
 } satisfies CatalogueEntry));
+
 /** Alias de compatibilité pour les consommateurs initiaux du catalogue. */
 export const NBA_CATALOGUE = BASKETBALL_PLAYERS;

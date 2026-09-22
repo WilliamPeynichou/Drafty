@@ -48,6 +48,7 @@ export function validateCatalogue(
   const playerKeys = new Set<string>();
   const totals: Record<Sport, number> = { football: 0, basketball: 0 };
   const tiers: Record<Sport, Set<number>> = { football: new Set(), basketball: new Set() };
+
   const positions: Record<Sport, Set<Position>> = {
     football: new Set(),
     basketball: new Set(),
@@ -55,21 +56,27 @@ export function validateCatalogue(
 
   entries.forEach((entry, index) => {
     const label = `Entrée ${index + 1}`;
+
     if (!entry || typeof entry !== 'object') {
       errors.push(`${label} : entrée invalide.`);
+
       return;
     }
+
     if (entry.sport !== 'football' && entry.sport !== 'basketball') {
       errors.push(`${label} : sport invalide.`);
+
       return;
     }
 
     totals[entry.sport] += 1;
+
     const requiredText = [
       ['nom', entry.name],
       ['club', entry.club],
       ['nationalité', entry.country],
     ] as const;
+
     for (const [field, value] of requiredText) {
       if (typeof value !== 'string' || value.trim().length === 0 || value !== value.trim()) {
         errors.push(`${label} : ${field} obligatoire, sans espaces superflus.`);
@@ -77,6 +84,7 @@ export function validateCatalogue(
     }
 
     const key = `${entry.sport}:${entry.name.trim().toLocaleLowerCase('fr-FR')}`;
+
     if (playerKeys.has(key)) errors.push(`${label} : joueur dupliqué (${entry.name}).`);
     playerKeys.add(key);
 
@@ -85,35 +93,45 @@ export function validateCatalogue(
     } else {
       positions[entry.sport].add(entry.position);
     }
+
     if (!Number.isInteger(entry.rating) || entry.rating < 1 || entry.rating > 99) {
       errors.push(`${label} : note entière attendue entre 1 et 99.`);
     }
+
     if (!Number.isInteger(entry.tier) || entry.tier < 1 || entry.tier > 3) {
       errors.push(`${label} : palier attendu entre 1 et 3.`);
     } else {
       tiers[entry.sport].add(entry.tier);
     }
+
     if (entry.sport === 'football') {
       const context = entry.footballContext;
+
       if (options.requireFootballGameContext && !context) {
         errors.push(`${label} : contexte de pic et historique français obligatoires pour le football.`);
       }
+
       if (context) {
         if (!Number.isInteger(context.primeRating) || context.primeRating < 1 || context.primeRating > 99) {
           errors.push(`${label} : note de pic entière attendue entre 1 et 99.`);
         }
+
         if (typeof context.primePeriod !== 'string' || context.primePeriod.trim().length < 4 || context.primePeriod !== context.primePeriod.trim()) {
           errors.push(`${label} : période de pic exploitable requise.`);
         }
+
         const history = context.history;
+
         if (!history || typeof history.text !== 'string' || history.text.trim().length < 12 || history.text !== history.text.trim()) {
           errors.push(`${label} : indice historique français exploitable requis.`);
         } else if (history.text.length > 400) {
           errors.push(`${label} : indice historique de 400 caractères maximum.`);
         }
+
         if (!history || history.provenance !== 'hand-authored') {
           errors.push(`${label} : provenance « hand-authored » requise pour l'indice historique.`);
         }
+
         if (!history || history.language !== 'fr') {
           errors.push(`${label} : langue « fr » requise pour l'indice historique.`);
         }
@@ -128,8 +146,10 @@ export function validateCatalogue(
         if (typeof hint !== 'string' || hint.trim().length < 12 || hint !== hint.trim()) {
           errors.push(`${label}, indice ${hintIndex + 1} : texte exploitable (12 caractères minimum) requis.`);
         }
+
         if (hint.length > 400) errors.push(`${label}, indice ${hintIndex + 1} : 400 caractères maximum.`);
         const normalized = hint.toLocaleLowerCase('fr-FR');
+
         if (seenHints.has(normalized)) errors.push(`${label}, indice ${hintIndex + 1} : indice dupliqué.`);
         seenHints.add(normalized);
       });
@@ -140,9 +160,11 @@ export function validateCatalogue(
     const minimum = options.minPlayersPerSport ?? 150;
     (Object.keys(totals) as Sport[]).forEach((sport) => {
       if (totals[sport] < minimum) errors.push(`${sport} : ${minimum} joueurs actifs minimum requis (${totals[sport]} fournis).`);
+
       if (tiers[sport].size !== 3) errors.push(`${sport} : les trois paliers doivent être représentés.`);
       const expected = positionsBySport[sport];
       const missing = expected.filter((position) => !positions[sport].has(position));
+
       if (missing.length) errors.push(`${sport} : postes manquants (${missing.join(', ')}).`);
     });
   }

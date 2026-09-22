@@ -6,7 +6,9 @@ import { RealtimeGateway } from './realtime/gateway.js';
 import './models/index.js';
 
 const app = createApp();
+
 const server = createServer(app);
+
 const gateway = new RealtimeGateway(server);
 
 try {
@@ -33,4 +35,5 @@ const shutdown = async (signal: string): Promise<void> => {
 };
 
 process.on('SIGINT', () => void shutdown('SIGINT'));
+
 process.on('SIGTERM', () => void shutdown('SIGTERM'));

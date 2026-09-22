@@ -48,5 +48,7 @@ MatchEvent.init(
 );
 
 Match.hasMany(MatchEvent, { foreignKey: 'matchId', as: 'events', onDelete: 'CASCADE' });
+
 MatchEvent.belongsTo(Match, { foreignKey: 'matchId', as: 'match' });
+
 MatchEvent.belongsTo(Player, { foreignKey: 'playerId', as: 'player' });

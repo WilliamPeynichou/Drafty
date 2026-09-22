@@ -20,7 +20,9 @@ export interface FootballGameContext {
 }
 
 export type FootballPosition = 'GK' | 'DEF' | 'MID' | 'FWD';
+
 export type BasketballPosition = 'PG' | 'SG' | 'SF' | 'PF' | 'C';
+
 export type Position = FootballPosition | BasketballPosition;
 
 /** Phases de la machine à états d'une partie. */

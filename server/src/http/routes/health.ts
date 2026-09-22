@@ -6,6 +6,7 @@ export const healthRouter: Router = Router();
 /** Suivi de l'état de santé du service et de sa base. */
 healthRouter.get('/', async (_req, res) => {
   let database = 'up';
+
   try {
     await sequelize.authenticate();
   } catch {

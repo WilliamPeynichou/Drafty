@@ -11,6 +11,7 @@ import { FOOTBALL_LIGUE1_PLAYERS } from '../data/football-players-ligue1.js';
 import type { SeedPlayer } from '../data/seed-players.js';
 import { BASKETBALL_PLAYERS } from '../data/nba-catalogue.js';
 import { Hint, Player } from '../models/index.js';
+import type { CreationAttributes } from 'sequelize';
 import { sequelize } from './sequelize.js';
 
 const footballEntries: SeedPlayer[] = [
@@ -54,22 +55,24 @@ try {
         tier: entry.tier,
       },
     });
+
     if (isNew) created += 1;
 
     for (const text of entry.hints) {
+      const defaults: CreationAttributes<Hint> = { playerId: player.id, text };
+      const historique = entry.footballContext?.history;
+
+      // L'indice historique porte sa provenance éditoriale ; les autres non.
+      if (historique && historique.text === text) {
+        defaults.provenance = historique.provenance;
+        defaults.language = historique.language;
+      }
+
       const [, hintIsNew] = await Hint.findOrCreate({
         where: { playerId: player.id, text },
-        defaults: {
-          playerId: player.id,
-          text,
-          ...(entry.footballContext && text === entry.footballContext.history.text
-            ? {
-                provenance: entry.footballContext.history.provenance,
-                language: entry.footballContext.history.language,
-              }
-            : {}),
-        },
+        defaults,
       });
+
       if (hintIsNew) hintsCreated += 1;
     }
   }
