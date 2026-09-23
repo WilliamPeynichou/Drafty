@@ -227,3 +227,6 @@ input:focus { border-color: var(--text); }
 
 @media (max-width: 800px) { .content { width: min(100% - 32px, 1120px); padding: 40px 0; }.draft__grid { grid-template-columns: 1fr; }.roster { display: none; }.draft__top { display: block; }.timer { margin-top: 20px; text-align: left; }.teams-reveal { grid-template-columns: 1fr; }.team-column { border-left: 1px solid var(--line); }.start-grid, .seats { grid-template-columns: 1fr; gap: 18px; } }
 @media (max-width: 500px) { .topbar { padding: 0 16px; }.status { font-size: 9px; }.field-row, .choice-row { flex-direction: column; }.reveal-row { padding: 12px; grid-template-columns: 22px minmax(0, 1fr) 72px; }.team-column__header { padding: 16px 12px; }.score-line { grid-template-columns: 1fr 90px 50px; padding: 12px; } }
+
+/* Shared palette used by the account and game screens. */
+:root { --bg: #080909; --surface: #101211; --surface-raised: #181b19; --line: #292d2a; --line-strong: #414740; --text: #ededed; --muted: #999e98; --faint: #858a84; --accent: #d8f078; --accent-ink: #11140c; --good: #d8f078; --bad: #ffb4aa; }

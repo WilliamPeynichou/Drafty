@@ -25,6 +25,11 @@ import {
 import { decideBotAction, type BotProfile } from './bot.js';
 import { drawLots } from './lot-draw.js';
 
+export interface MatchPersistence {
+  onEvents: (events: MatchEngineEvent[]) => void;
+  onFinished: (match: LiveMatch) => void;
+}
+
 type Emit = (seat: SeatId, message: ServerMessage) => void;
 
 /** Réponse à une action de jeu, acceptée ou refusée avec son motif. */
@@ -55,6 +60,9 @@ export class LiveMatch {
   private turnTimer: NodeJS.Timeout | null = null;
   private botTimer: NodeJS.Timeout | null = null;
   private emit: Emit = () => {};
+  private persistence: MatchPersistence | null = null;
+  private persistedEventCount = 0;
+  private completionPersisted = false;
   private readonly botProfile: BotProfile | null;
 
   constructor(
@@ -81,6 +89,10 @@ export class LiveMatch {
 
   setEmitter(emit: Emit): void {
     this.emit = emit;
+  }
+
+  setPersistence(persistence: MatchPersistence): void {
+    this.persistence = persistence;
   }
 
   join(user: { userId: string; displayName: string; isBot?: boolean }): SeatId | null {
@@ -149,6 +161,9 @@ export class LiveMatch {
 
   /** Diffuse les évènements, en filtrant l'information par destinataire. */
   private dispatch(events: MatchEngineEvent[]): void {
+    const persistentEvents = events.filter((event) => ['lot_opened', 'bid', 'pass', 'timeout', 'awarded', 'unsold'].includes(event.type));
+    if (persistentEvents.length > 0) this.persistence?.onEvents(persistentEvents);
+
     for (const event of events) {
       switch (event.type) {
         case 'lot_opened':
@@ -208,6 +223,10 @@ export class LiveMatch {
 
     this.broadcastState();
     this.scheduleBotTurn();
+    if (this.state.phase === 'results' && !this.completionPersisted) {
+      this.completionPersisted = true;
+      this.persistence?.onFinished(this);
+    }
   }
   private startReveal(): void {
     this.clearTimer();

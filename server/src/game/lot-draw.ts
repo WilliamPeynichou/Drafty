@@ -51,9 +51,23 @@ interface PlayerWithHints extends Player {
   hints?: Hint[];
 }
 
+const hintBags = new Map<number, string[]>();
+
+function nextHint(playerId: number, hints: readonly Hint[]): Hint | undefined {
+  if (hints.length === 0) return undefined;
+  let bag = hintBags.get(playerId);
+  if (!bag || bag.length === 0) {
+    bag = shuffle(hints.map((hint) => String(hint.id)));
+    hintBags.set(playerId, bag);
+  }
+  const selectedId = bag.pop();
+  return hints.find((hint) => String(hint.id) === selectedId) ?? hints[0];
+}
+
 /**
  * Compose les lots d'une partie : un joueur par tour, réparti par paliers,
- * chacun accompagné d'une de ses anecdotes.
+ * chacun accompagné d'une anecdote. Pour chaque joueur, les indices sont
+ * tirés en sac mélangé : aucun indice ne revient avant épuisement du sac.
  */
 export async function drawLots(sport: Sport): Promise<DrawnLots> {
   const rules = getRules(sport);
@@ -109,8 +123,8 @@ export async function drawLots(sport: Sport): Promise<DrawnLots> {
     if (player === undefined) return;
     used.add(player.id);
 
-    const hints = player.hints ?? [];
-    const hint = hints[Math.floor(Math.random() * hints.length)];
+  const hints = player.hints ?? [];
+    const hint = nextHint(player.id, hints);
     const lotId = randomUUID();
 
     lots.push({

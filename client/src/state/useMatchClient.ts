@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { getHistory, getCurrentAccount, login as loginAccount, logout as logoutAccount, register as registerAccount, type Account, type MatchHistoryItem } from '../api.js';
 import {
   encode,
   type ClientMessage,
@@ -27,6 +28,12 @@ export interface Notice {
 export interface MatchClient {
   status: ConnectionStatus;
   identity: { userId: string; displayName: string } | null;
+  account: Account | null;
+  refreshAccount: () => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  register: (displayName: string, email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  matchHistory: MatchHistoryItem[];
   view: MatchView | null;
   /** Indice du lot courant, envoyé séparément de l'état de partie. */
   lot: { round: number; lotId: string; hint: string; position: string } | null;
@@ -52,7 +59,11 @@ const WS_URL = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.ho
  */
 export function useMatchClient(): MatchClient {
   const socketRef = useRef<WebSocket | null>(null);
+  const socketIdentity = useRef<{ userId: string; displayName: string } | null>(null);
   const noticeId = useRef(0);
+  const [socketVersion, setSocketVersion] = useState(0);
+  const [account, setAccount] = useState<Account | null>(null);
+  const [matchHistory, setMatchHistory] = useState<MatchHistoryItem[]>([]);
 
   const [status, setStatus] = useState<ConnectionStatus>('connecting');
   const [identity, setIdentity] = useState<{ userId: string; displayName: string } | null>(null);
@@ -71,10 +82,40 @@ export function useMatchClient(): MatchClient {
   }, []);
 
   useEffect(() => {
+    void getCurrentAccount().then(async (current) => {
+      setAccount(current);
+      if (current) {
+        setMatchHistory(await getHistory());
+        socketIdentity.current = { userId: String(current.id), displayName: current.displayName };
+        setIdentity(socketIdentity.current);
+        setSocketVersion((version) => version + 1);
+      }
+    }).catch(() => {});
+  }, []);
+
+  const refreshAccount = useCallback(async () => {
+    const current = await getCurrentAccount();
+    setAccount(current);
+    if (current) {
+      setMatchHistory(await getHistory());
+      socketIdentity.current = { userId: String(current.id), displayName: current.displayName };
+      setIdentity(socketIdentity.current);
+    } else {
+      socketIdentity.current = null;
+      setIdentity(null);
+      setMatchHistory([]);
+    }
+    setSocketVersion((version) => version + 1);
+  }, []);
+
+  useEffect(() => {
     const socket = new WebSocket(WS_URL);
     socketRef.current = socket;
 
-    socket.addEventListener('open', () => setStatus('open'));
+    socket.addEventListener('open', () => {
+      setStatus('open');
+      if (socketIdentity.current) socket.send(encode({ type: 'auth', displayName: socketIdentity.current.displayName }));
+    });
     socket.addEventListener('close', () => setStatus('closed'));
     socket.addEventListener('message', (event) => {
       let message: ServerMessage;
@@ -89,7 +130,8 @@ export function useMatchClient(): MatchClient {
 
       switch (message.type) {
         case 'authenticated':
-          setIdentity({ userId: message.userId, displayName: message.displayName });
+          socketIdentity.current = { userId: message.userId, displayName: message.displayName };
+          setIdentity(socketIdentity.current);
           break;
 
         case 'match:state':
@@ -136,7 +178,7 @@ export function useMatchClient(): MatchClient {
       socket.close();
       socketRef.current = null;
     };
-  }, [pushNotice]);
+  }, [pushNotice, socketVersion]);
 
   const send = useCallback((message: ClientMessage) => {
     const socket = socketRef.current;
@@ -148,6 +190,12 @@ export function useMatchClient(): MatchClient {
     () => ({
       status,
       identity,
+      account,
+      refreshAccount,
+      login: async (email: string, password: string) => { await loginAccount(email, password); await refreshAccount(); },
+      register: async (displayName: string, email: string, password: string) => { await registerAccount(displayName, email, password); await refreshAccount(); },
+      logout: async () => { await logoutAccount(); await refreshAccount(); },
+      matchHistory,
       view,
       lot,
       history,
@@ -168,7 +216,7 @@ export function useMatchClient(): MatchClient {
       },
       dismiss: (id: number) => setNotices((previous) => previous.filter((n) => n.id !== id)),
     }),
-    [status, identity, view, lot, history, notices, send],
+    [status, identity, account, refreshAccount, matchHistory, view, lot, history, notices, send],
   );
 }
 

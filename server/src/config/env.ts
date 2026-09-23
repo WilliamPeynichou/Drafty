@@ -10,6 +10,9 @@ const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3001),
   CLIENT_ORIGIN: z.string().default('http://localhost:5173'),
+  GOOGLE_ID: z.string().default(''),
+  GOOGLE_SECRET_KEY: z.string().default(''),
+  GOOGLE_CALLBACK_URL: z.string().default('http://localhost:3001/api/auth/google/callback'),
 
   DB_HOST: z.string().default('127.0.0.1'),
   DB_PORT: z.coerce.number().int().positive().default(8889),

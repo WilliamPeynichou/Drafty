@@ -13,6 +13,8 @@ export interface MatchHistoryItem {
   score?: number | string;
   opponentScore?: number | string;
   playedAt?: string;
+  userSeat?: 'A' | 'B';
+  won?: boolean | null;
 }
 
 interface ApiEnvelope<T> {
@@ -77,8 +79,11 @@ function unwrapAccount(body: ApiEnvelope<unknown>): Account | null {
 
 export async function getCurrentAccount(): Promise<Account | null> {
   try {
-    const body = await request<ApiEnvelope<unknown>>('/api/auth/me');
-    return unwrapAccount(body);
+    const response = await fetch('/api/auth/me', { credentials: 'include' });
+    if (response.status === 401) return null;
+    if (!response.ok) throw new Error('Chargement du compte impossible.');
+    const body = await response.json() as { user: Account };
+    return body.user;
   } catch (error) {
     if (error instanceof Error && /authentifi|connect|unauthoriz|401/i.test(error.message)) return null;
     throw error;
@@ -116,9 +121,9 @@ function historyItem(value: unknown): MatchHistoryItem | null {
     id,
     sport: text(item.sport),
     opponent: text(item.opponent ?? item.opponentName),
-    result: text(item.result ?? item.outcome),
-    score: text(item.score ?? item.myScore),
-    opponentScore: text(item.opponentScore),
+    score: text(item.userSeat === 'B' ? item.scoreB : item.scoreA),
+    opponentScore: text(item.userSeat === 'B' ? item.scoreA : item.scoreB),
+    result: item.won === null ? 'draw' : item.won === true ? 'win' : item.won === false ? 'loss' : text(item.result ?? item.outcome),
     playedAt: text(item.playedAt ?? item.createdAt ?? item.finishedAt),
   };
 }

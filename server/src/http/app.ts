@@ -3,6 +3,8 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import { env } from '../config/env.js';
 import { healthRouter } from './routes/health.js';
 import { catalogRouter } from './routes/catalog.js';
+import { authRouter } from './routes/auth.js';
+import { historyRouter } from './routes/history.js';
 
 export function createApp() {
   const app = express();
@@ -12,6 +14,8 @@ export function createApp() {
 
   app.use('/api/health', healthRouter);
   app.use('/api/catalog', catalogRouter);
+  app.use('/api/auth', authRouter);
+  app.use('/api/history', historyRouter);
 
   app.use((_req: Request, res: Response) => {
     res.status(404).json({ error: 'not_found' });

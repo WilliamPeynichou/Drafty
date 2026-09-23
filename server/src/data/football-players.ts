@@ -12,8 +12,8 @@ const player = (
   country: string,
   rating: number,
   tier: 1 | 2 | 3,
-  hint: string,
-): SeedPlayer => ({ sport: 'football', name, position, club, country, rating, tier, hints: [hint] });
+  hint: string | readonly string[],
+): SeedPlayer => ({ sport: 'football', name, position, club, country, rating, tier, hints: typeof hint === 'string' ? [hint] : [...hint] });
 
 export const FOOTBALL_PLAYERS: SeedPlayer[] = [
   // Premier League
@@ -23,7 +23,14 @@ export const FOOTBALL_PLAYERS: SeedPlayer[] = [
   player('Phil Foden', 'MID', 'Manchester City', 'Angleterre', 88, 1, "Élu meilleur joueur du championnat anglais, il n'a connu qu'un seul club professionnel."),
   player('Rodri', 'MID', 'Manchester City', 'Espagne', 91, 1, "Son but dans une finale à Istanbul a offert à son club le trophée qui lui manquait."),
   player('Declan Rice', 'MID', 'Arsenal', 'Angleterre', 87, 1, "Ancien capitaine d'un club de l'est londonien, il a marqué deux coups francs contre son ex-équipe en Europe."),
-  player('Martin Ødegaard', 'MID', 'Arsenal', 'Norvège', 88, 1, "Il a débuté en première division dans son pays à quinze ans avant de devenir capitaine à Londres."),
+  player('Martin Ødegaard', 'MID', 'Arsenal', 'Norvège', 88, 1, [
+    "Il a débuté en première division norvégienne à 15 ans et 118 jours, après avoir joué un match amical à seulement 13 ans.",
+    "À 15 ans et 253 jours, il est devenu le plus jeune joueur à débuter avec l’équipe première de Norvège.",
+    "Moins de deux mois après ses débuts internationaux, il est devenu le plus jeune joueur à participer à un match de qualification de l’UEFA.",
+    "Il a signé au Real Madrid en janvier 2015, après avoir attiré l’attention des plus grands clubs européens depuis Drammen.",
+    "Capitaine de la Norvège depuis mars 2021, il a ensuite reçu le brassard d’Arsenal à l’été 2022.",
+    "Prêté par le Real Madrid à Arsenal en janvier 2021, il a transformé ce passage temporaire en transfert définitif quelques mois plus tard.",
+  ]),
   player('Alexander Isak', 'FWD', 'Newcastle United', 'Suède', 86, 2, "Un attaquant suédois devenu le transfert record d'un club du nord-est de l'Angleterre."),
   player('Bruno Guimarães', 'MID', 'Newcastle United', 'Brésil', 86, 2, "Il a porté le brassard d'un club anglais après avoir remporté les Jeux olympiques avec le Brésil."),
   player('Son Heung-min', 'FWD', 'Tottenham Hotspur', 'Corée du Sud', 87, 2, "Il est devenu le premier joueur asiatique à terminer meilleur buteur du championnat anglais."),

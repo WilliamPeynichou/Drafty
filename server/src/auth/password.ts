@@ -1,7 +1,11 @@
 import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 
-const scrypt = promisify(scryptCallback);
+const scrypt = promisify(scryptCallback) as (
+  password: string,
+  salt: string,
+  keyLength: number,
+) => Promise<Buffer>;
 const KEY_LENGTH = 64;
 
 /** Hash de mot de passe avec sel aléatoire, au format `scrypt$sel$hash`. */
