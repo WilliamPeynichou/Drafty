@@ -1,29 +1,18 @@
 import { Router } from 'express';
-import { QueryTypes } from 'sequelize';
-import { sequelize } from '../../db/sequelize.js';
+import { getCatalogStats, type CatalogStatsRepository } from '../../application/catalog/get-catalog-stats.js';
+import { sequelizeCatalogStatsRepository } from '../../infrastructure/catalog/sequelize-catalog-stats-repository.js';
 
-export const catalogRouter: Router = Router();
-
-interface StatRow {
-  sport: string;
-  tier: number;
-  total: number;
+/** Only aggregate data is exposed: player identities must remain server-side. */
+export function createCatalogRouter(repository: CatalogStatsRepository = sequelizeCatalogStatsRepository): Router {
+  const router: Router = Router();
+  router.get('/stats', async (_req, res) => {
+    try {
+      res.json(await getCatalogStats(repository));
+    } catch {
+      res.status(503).json({ error: 'database_unavailable' });
+    }
+  });
+  return router;
 }
 
-/**
- * Statistiques du catalogue.
- * On n'expose délibérément aucune fiche joueur : la liste des identités
- * disponibles est une information de jeu, elle reste côté serveur.
- */
-catalogRouter.get('/stats', async (_req, res) => {
-  try {
-    const rows = await sequelize.query<StatRow>(
-      'SELECT sport, tier, COUNT(*) AS total FROM players WHERE active = true GROUP BY sport, tier ORDER BY sport, tier',
-      { type: QueryTypes.SELECT },
-    );
-
-    res.json({ stats: rows });
-  } catch {
-    res.status(503).json({ error: 'database_unavailable' });
-  }
-});
+export const catalogRouter = createCatalogRouter();
