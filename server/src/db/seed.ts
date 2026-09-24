@@ -10,8 +10,9 @@ import { FOOTBALL_SERIE_A_BUNDESLIGA_EXPANSION } from '../data/football-serie-a-
 import { FOOTBALL_LIGUE1_PLAYERS } from '../data/football-players-ligue1.js';
 import type { SeedPlayer } from '../data/seed-players.js';
 import { BASKETBALL_PLAYERS } from '../data/nba-catalogue.js';
+import { enrichCatalogueHints } from '../data/hint-enrichment.js';
 import { Hint, Player } from '../models/index.js';
-import type { CreationAttributes } from 'sequelize';
+import { Op, type CreationAttributes } from 'sequelize';
 import { sequelize } from './sequelize.js';
 
 const footballEntries: SeedPlayer[] = [
@@ -35,11 +36,12 @@ const footballEntries: SeedPlayer[] = [
 try {
   await sequelize.authenticate();
   await sequelize.sync();
-  const catalogue = [...footballEntries, ...BASKETBALL_PLAYERS];
+  const catalogue = enrichCatalogueHints([...footballEntries, ...BASKETBALL_PLAYERS]);
   validateCatalogue(catalogue, { requireLaunchReady: true, requireFootballGameContext: true });
 
   let created = 0;
   let hintsCreated = 0;
+  let hintsRemoved = 0;
 
   for (const entry of catalogue) {
     const [player, isNew] = await Player.findOrCreate({
@@ -75,11 +77,16 @@ try {
 
       if (hintIsNew) hintsCreated += 1;
     }
+
+    // Retire les indices qui ne figurent plus dans le catalogue (texte corrigé ou supprimé).
+    hintsRemoved += await Hint.destroy({
+      where: { playerId: player.id, text: { [Op.notIn]: [...entry.hints] } },
+    });
   }
 
   const total = await Player.count();
   console.log(
-    `Catalogue chargé : ${created} joueur(s) et ${hintsCreated} indice(s) ajoutés, ${total} joueur(s) en base.`,
+    `Catalogue chargé : ${created} joueur(s) et ${hintsCreated} indice(s) ajoutés, ${hintsRemoved} obsolète(s) supprimé(s), ${total} joueur(s) en base.`,
   );
 } catch (error) {
   console.error('Échec du chargement initial :', error);
