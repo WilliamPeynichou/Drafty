@@ -12,6 +12,7 @@ export function createCatalogRouter(repository: CatalogStatsRepository = sequeli
       res.status(503).json({ error: 'database_unavailable' });
     }
   });
+
   return router;
 }
 

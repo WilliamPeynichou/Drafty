@@ -19,9 +19,11 @@ export interface HistoryRepository {
 
 export async function getUserHistory(repository: HistoryRepository, userId: string) {
   const matches = await repository.findFinishedForUser(userId, 50);
+
   return {
     matches: matches.map((match) => {
       const userSeat = match.seatAUserId === userId ? 'A' : 'B';
+
       return {
         id: match.id,
         code: match.code,
